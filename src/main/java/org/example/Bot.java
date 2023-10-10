@@ -1,7 +1,6 @@
 package org.example;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -9,15 +8,19 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
+@Slf4j
 public class Bot extends TelegramLongPollingBot {
 
     Properties conf = PropertiesLoader.loadProperties();
 
-    private int questionNumber = 1;
+    private Map<Long, Integer> userData;
 
     public Bot() throws IOException {
+        userData = new HashMap<>();
     }
 
     @Override
@@ -43,22 +46,23 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        Logger logger = LoggerFactory.getLogger(Bot.class);
 
         Message message = update.getMessage();
         String text = message.getText();
-        logger.info(text);
+        log.info(text);
         long userId = message.getFrom().getId();
 
         if (text.equals("/start")) {
             sendText(userId, "Привет! Это тест навыков Java, начинаем :");
-            String question = getQuestion(questionNumber = 1);
+            userData.put(userId, 1);
+            String question = getQuestion(1);
             sendText(userId, question);
         } else {
-            boolean result = checkAnswer(questionNumber, text);
+            boolean result = checkAnswer(userData.get(userId), text);
             if (result) {
                 sendText(userId, "Верно!");
-                sendText(userId, getQuestion(++questionNumber));
+                userData.put(userId, userData.getOrDefault(userId, 0)+1);
+                sendText(userId, getQuestion(userData.get(userId)));
             } else {
                 sendText(userId, "Неверно :(");
             }
@@ -79,7 +83,8 @@ public class Bot extends TelegramLongPollingBot {
             case 4:
                 return "Вопрос 4. Какие методы HTTP-запросов вы занете?";
             default:
-                throw new IllegalStateException("Unexpected value: " + number);
+                return "Вы верно ответили на все вопросы!";
+//                throw new IllegalStateException("Unexpected value: " + number);
         }
 
     }
