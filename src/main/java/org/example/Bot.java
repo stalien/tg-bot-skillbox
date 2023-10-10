@@ -1,23 +1,33 @@
 package org.example;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
+import java.util.Properties;
+
 public class Bot extends TelegramLongPollingBot {
+
+    Properties conf = PropertiesLoader.loadProperties();
 
     private int questionNumber = 1;
 
+    public Bot() throws IOException {
+    }
+
     @Override
     public String getBotUsername() {
-        return null;
+        return conf.getProperty("BotUsername");
     }
 
     @Override
     public String getBotToken() {
-        return null;
+        return conf.getProperty("BotToken");
     }
 
     public void sendText(Long who, String what){
@@ -33,8 +43,11 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        Logger logger = LoggerFactory.getLogger(Bot.class);
+
         Message message = update.getMessage();
         String text = message.getText();
+        logger.info(text);
         long userId = message.getFrom().getId();
 
         if (text.equals("/start")) {
