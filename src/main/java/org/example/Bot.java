@@ -56,23 +56,27 @@ public class Bot extends TelegramLongPollingBot {
         if (text.equals("/start")) {
             sendText(userId, "Привет! Это тест навыков Java, начинаем :");
             users.put(userId, new UserData());
-            String question = getQuestion(1);
+            String question = getQuestion(1, userData);
             sendText(userId, question);
         } else {
             int questionNumber = userData.getQuestionNumber();
+            int score = userData.getScore();
             boolean result = checkAnswer(questionNumber, text);
             if (result) {
                 sendText(userId, "Верно!");
+                userData.setScore(++score);
                 userData.setQuestionNumber(++questionNumber);
-                sendText(userId, getQuestion(questionNumber));
+                sendText(userId, getQuestion(questionNumber, userData));
             } else {
                 sendText(userId, "Неверно :(");
+                userData.setQuestionNumber(++questionNumber);
+                sendText(userId, getQuestion(questionNumber, userData));
             }
         }
 
     }
 
-    public String getQuestion(int number) {
+    public String getQuestion(int number, UserData userData) {
 
         switch (number) {
             case 1:
@@ -83,9 +87,9 @@ public class Bot extends TelegramLongPollingBot {
                 return "Вопрос 3. С помощью какой команды в системе контроля версий Git можно просмотреть " +
                         "авторов различных строк в одном файле?";
             case 4:
-                return "Вопрос 4. Какие методы HTTP-запросов вы занете?";
+                return "Вопрос 4. Какие методы HTTP-запросов вы знаете?";
             default:
-                return "Вы верно ответили на все вопросы!";
+                return "Вы верно ответили на все вопросы!" + " У вас " + userData.getScore() + " очков!";
 //                throw new IllegalStateException("Unexpected value: " + number);
         }
 
