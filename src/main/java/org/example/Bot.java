@@ -17,10 +17,10 @@ public class Bot extends TelegramLongPollingBot {
 
     Properties conf = PropertiesLoader.loadProperties();
 
-    private Map<Long, Integer> userData;
+    private Map<Long, UserData> users;
 
     public Bot() throws IOException {
-        userData = new HashMap<>();
+        users = new HashMap<>();
     }
 
     @Override
@@ -51,18 +51,20 @@ public class Bot extends TelegramLongPollingBot {
         String text = message.getText();
         log.info(text);
         long userId = message.getFrom().getId();
+        UserData userData = users.get(userId);
 
         if (text.equals("/start")) {
             sendText(userId, "Привет! Это тест навыков Java, начинаем :");
-            userData.put(userId, 1);
+            users.put(userId, new UserData());
             String question = getQuestion(1);
             sendText(userId, question);
         } else {
-            boolean result = checkAnswer(userData.get(userId), text);
+            int questionNumber = userData.getQuestionNumber();
+            boolean result = checkAnswer(questionNumber, text);
             if (result) {
                 sendText(userId, "Верно!");
-                userData.put(userId, userData.getOrDefault(userId, 0)+1);
-                sendText(userId, getQuestion(userData.get(userId)));
+                userData.setQuestionNumber(++questionNumber);
+                sendText(userId, getQuestion(questionNumber));
             } else {
                 sendText(userId, "Неверно :(");
             }
