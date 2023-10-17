@@ -8,7 +8,7 @@ public class UserData {
     private int score;
 
     public UserData() {
-        this.questionNumber = 1;
+        this.questionNumber = 0;
         this.score = 0;
     }
 }

@@ -1,6 +1,7 @@
 package org.example;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.questions.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -8,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -19,8 +21,15 @@ public class Bot extends TelegramLongPollingBot {
 
     private Map<Long, UserData> users;
 
+    private ArrayList<AbstractQuestion> questions;
+
     public Bot() throws IOException {
         users = new HashMap<>();
+        questions = new ArrayList<>();
+        questions.add(new Question1());
+        questions.add(new Question2());
+        questions.add(new Question3());
+        questions.add(new Question4());
     }
 
     @Override
@@ -56,60 +65,35 @@ public class Bot extends TelegramLongPollingBot {
         if (text.equals("/start")) {
             sendText(userId, "Привет! Это тест навыков Java, начинаем :");
             users.put(userId, new UserData());
-            String question = getQuestion(1, userData);
+            String question = questions.get(0).getQuestion();
             sendText(userId, question);
-        } else {
+        } else if (userData.getQuestionNumber() < questions.size()) {
             int questionNumber = userData.getQuestionNumber();
             int score = userData.getScore();
-            boolean result = checkAnswer(questionNumber, text);
-            if (result) {
+            boolean result = questions.get(questionNumber).checkAnswer(text);
+            if (userData.getQuestionNumber() == questions.size()-1) {
+                if (result) {
+                    sendText(userId, "Верно!");
+                    userData.setScore(++score);
+                }
+                sendText(userId, "Вы ответили на все вопросы!" + " У вас " + userData.getScore() + " из "
+                        + questions.size() + " очков! ");
+                sendText(userId, "Чтобы начать заново, используйте команду /start");
+            } else if (result) {
                 sendText(userId, "Верно!");
                 userData.setScore(++score);
                 userData.setQuestionNumber(++questionNumber);
-                sendText(userId, getQuestion(questionNumber, userData));
+                sendText(userId, questions.get(questionNumber).getQuestion());
             } else {
                 sendText(userId, "Неверно :(");
                 userData.setQuestionNumber(++questionNumber);
-                sendText(userId, getQuestion(questionNumber, userData));
+                sendText(userId, questions.get(questionNumber).getQuestion());
             }
+        } else {
+            sendText(userId, "Вы ответили на все вопросы!" + " У вас " + userData.getScore() + "/4 очков! ");
+            sendText(userId, "Чтобы начать заново, используйте команду /start");
         }
 
     }
 
-    public String getQuestion(int number, UserData userData) {
-
-        switch (number) {
-            case 1:
-                return "Вопрос 1. Сколько в языке Java есть примитивов?";
-            case 2:
-                return "Вопрос 2. Сколько в реляционных базах данных существует типов связей между таблицами?";
-            case 3:
-                return "Вопрос 3. С помощью какой команды в системе контроля версий Git можно просмотреть " +
-                        "авторов различных строк в одном файле?";
-            case 4:
-                return "Вопрос 4. Какие методы HTTP-запросов вы знаете?";
-            default:
-                return "Вы верно ответили на все вопросы!" + " У вас " + userData.getScore() + " очков!";
-//                throw new IllegalStateException("Unexpected value: " + number);
-        }
-
-    }
-
-    public boolean checkAnswer(int number, String answer) {
-        answer = answer.toLowerCase();
-
-        switch (number) {
-            case 1:
-                return answer.equals("8");
-            case 2:
-                return answer.equals("3");
-            case 3:
-                return answer.contains("blame");
-            case 4:
-                return answer.contains("get") && answer.contains("post") && answer.contains("put")
-                        && answer.contains("patch") && answer.contains("delete");
-            default:
-                throw new IllegalStateException("Unexpected value: " + number);
-        }
-    }
 }
